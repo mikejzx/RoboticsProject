@@ -30,7 +30,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        bt = new BluetoothHandler(this);
+        //bt = new BluetoothHandler(this);
 
         nodes.clear();
         nodes.add(new Node(150, 600));
@@ -44,7 +44,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        bt.onResume();
+        //bt.onResume();
     }
 
     public void btn_upload(View view) {
@@ -55,7 +55,7 @@ public class MainActivity extends Activity {
         byte[] buffer = new byte[0];
 
 
-        bt.writeData(buffer);
+        //bt.writeData(buffer);
     }
 
     public void btn_ins(View view) {
