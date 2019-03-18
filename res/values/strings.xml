@@ -3,5 +3,7 @@
 
     <string name="app_name">NodeHub</string>
     <string name="action_settings">Settings</string>
+    <string name="activity_main_name">Node Editor</string>
+    <string name="activity_bt_name">Device Select</string>
 
 </resources>

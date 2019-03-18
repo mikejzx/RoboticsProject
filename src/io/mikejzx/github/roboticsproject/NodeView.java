@@ -23,8 +23,11 @@ public class NodeView extends View {
     private Vector2 oldTouch = new Vector2(),
             touchDelta = new Vector2();
 
-    private static final int nodeColour =  Color.parseColor("#AAAAFF");
-    private static final int nodeColour_selected =  Color.parseColor("#AAFF88");
+    private static final int colourBg =  Color.parseColor("#EEEEEE");
+    private static final int colourText =  Color.parseColor("#111111");
+    private static final int colourNodeLine = Color.parseColor("#002288");
+    private static final int colourNode =  Color.parseColor("#EEEECC");
+    private static final int colourNodeSelected =  Color.parseColor("#AAFFFF");
 
 
     public NodeView (Context context) {
@@ -59,7 +62,7 @@ public class NodeView extends View {
         super.onDraw(canvas);
 
         paint.setStyle(Paint.Style.FILL);
-        paint.setColor(Color.parseColor("#222233"));
+        paint.setColor(colourBg);
         canvas.drawPaint(paint);
 
         List<Node> nodes = MainActivity.nodes;
@@ -67,7 +70,7 @@ public class NodeView extends View {
         Node selectedNode = null;
 
         // Draw text
-        paint.setColor(Color.parseColor("#AAAAFF"));
+        paint.setColor(colourText);
         paint.setTextSize(30.0f);
         String strAdd = nodeCount > 99 ? " (Maximum)" : "";
         if (nodeCount == 2) { strAdd = " (Minimum)"; }
@@ -110,7 +113,7 @@ public class NodeView extends View {
 
         // Selected only: Outline A
         if (node.selected) {
-            paint.setColor(Color.parseColor("#00FF00"));
+            paint.setColor(Color.parseColor("#00FFFF"));
             canvas.drawCircle(x, y, 32, paint);
         }
         //DrawNode(node, x, y, canvas);
@@ -120,7 +123,7 @@ public class NodeView extends View {
         canvas.drawCircle(x, y, 25, paint);
 
         // Node colour foreground
-        paint.setColor(nodeColour_selected);
+        paint.setColor(colourNodeSelected);
         canvas.drawCircle(x, y, 20, paint);
     }
 
@@ -130,14 +133,14 @@ public class NodeView extends View {
         canvas.drawCircle(x, y, 25, paint);
 
         // Node colour foreground
-        paint.setColor(nodeColour);
+        paint.setColor(colourNode);
         canvas.drawCircle(x, y, 20, paint);
     }
 
     private void DrawNodeLine (Node cur, Node next, float x, float y, Canvas canvas) {
         float xNext = next.position.getXClamped(getWidth());
         float yNext = next.position.getYClamped(getHeight());
-        paint.setColor(Color.parseColor("#00FFFF"));
+        paint.setColor(colourNodeLine);
         canvas.drawLine(x, y, xNext, yNext, paint);
     }
 
@@ -173,13 +176,13 @@ public class NodeView extends View {
             } break;
 
             case (MotionEvent.ACTION_MOVE): {
-                // Touch move pans the selected node.
-                float dist = MainActivity.selectedNode.position.distance(touchPos);
-                float multiplier = 0.4f + (1.0f - Utils.clamp(dist / 100.0f, 0.0f, 1.0f)) * 0.6f;
+                // Touch move pans the selected node. (Removed for usability reasons. Was multiplied with touchDelta)
+                //float dist = MainActivity.selectedNode.position.distance(touchPos);
+                //float multiplier = 0.4f + (1.0f - Utils.clamp(dist / 100.0f, 0.0f, 1.0f)) * 0.6f;
                 Node n = MainActivity.selectedNode;
-                n.position.addTo(touchDelta.mul(multiplier));
-                n.position.setX(n.position.getXClamped(getWidth()));
-                n.position.setY(n.position.getYClamped(getHeight()));
+                n.position.addTo(touchDelta);
+                n.position.setX((int)n.position.getXClamped(getWidth()));
+                n.position.setY((int)n.position.getYClamped(getHeight()));
                 //System.out.println(touchDelta.getY() + ", " + touchDelta.getY());
 
                 // Refresh control
