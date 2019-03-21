@@ -14,6 +14,8 @@ import java.util.UUID;
 https://wingoodharry.wordpress.com/2014/04/15/android-sendreceive-data-with-arduino-using-bluetooth-part-2/
 */
 
+// STILL NEED TO DO: CREATE A BLUETOOTH DEVICE SELECTION ACTIVITY.
+
 public class BluetoothHandler {
 
     private BluetoothAdapter btAdapter;

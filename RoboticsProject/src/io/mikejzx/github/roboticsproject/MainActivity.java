@@ -50,7 +50,7 @@ public class MainActivity extends Activity {
         	.setIcon(android.R.drawable.ic_dialog_info);
         dialogAlert = dialogBuilder.create();
         
-        //bt = new BluetoothHandler(this);
+        bt = new BluetoothHandler(this);
 
         nodes.clear();
         nodes.add(new Node((short)150, (short)600));
@@ -64,14 +64,15 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        //bt.onResume();
+        bt.onResume();
     }
 
     public void btn_upload(View view) {
         // TODO: implement bluetooth functions...
-
-        String hexData = serialiseNodeData();
-        System.out.println("Data serialised into : \n" + hexData.toString());
+        byte[] buffer = serialiseNodeData();
+        String dataString = getSerialisedDataHexString(buffer);
+        bt.writeData(buffer);
+        System.out.println("Sent packet to bluetooth device containing: \n" + dataString);
     }
     
     @Override
@@ -79,7 +80,7 @@ public class MainActivity extends Activity {
     	switch (item.getItemId()) {
 	    	case (R.id.action_debuginfo): {
 	    		System.out.println("Menu clicked");
-	    		dialogBuilder.setMessage("Serialised hex data for signed 16-bit vectors: \n\n" +  serialiseNodeData());
+	    		dialogBuilder.setMessage("Serialised hex data for signed 16-bit vectors: \n\n" +  serialiseNodeDataString());
 	    		dialogAlert = dialogBuilder.create();
 	            dialogAlert.show();
 	    	} return true;
@@ -90,7 +91,7 @@ public class MainActivity extends Activity {
     	}
     }
     
-    private static String serialiseNodeData() {
+    private static byte[] serialiseNodeData () {
     	// Serialised Vector2's into binary form:
     	// Vector2's will be 4-bytes long. (Because both X & Y are 16-bit ints)
     	int nodeCount = nodes.size();
@@ -109,13 +110,21 @@ public class MainActivity extends Activity {
         		serialisedData[(i * 4) + b] = nodeBytes[b];
         	}
         }
-        
-        StringBuilder hexData = new StringBuilder();
-        for (int i = 0; i < packetSize; i++) {
+        return serialisedData;
+    }
+    
+    private static String serialiseNodeDataString() {
+        byte[] serialisedData = serialiseNodeData();
+        return getSerialisedDataHexString(serialisedData);
+    }
+    
+    private static String getSerialisedDataHexString (byte[] buffer) {
+    	StringBuilder hexData = new StringBuilder();
+        for (int i = 0; i < buffer.length; i++) {
         	String add = " ";
         	if ((i + 1) % 2 == 0) { add = ", "; }
         	if ((i + 1) % 4 == 0) { add = "\n"; }
-        	hexData.append(String.format("0x%02X%s", serialisedData[i] & 0xFF, add));
+        	hexData.append(String.format("0x%02X%s", buffer[i] & 0xFF, add));
         }
         return hexData.toString();
     }
