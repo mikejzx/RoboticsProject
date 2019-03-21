@@ -78,8 +78,8 @@ public class NodeView extends View {
 
         for (int i = 0; i < nodeCount; i++) {
             Node node = nodes.get(i);
-            float x = node.position.getXClamped(getWidth()),
-                    y = node.position.getYClamped(getHeight());
+            short x = node.position.getXClamped((short)getWidth()),
+                    y = node.position.getYClamped((short)getHeight());
 
             // Skip selected node.
             if (node.selected) {
@@ -108,8 +108,8 @@ public class NodeView extends View {
     }
 
     private void DrawSelectedNode (Node node, Canvas canvas) {
-        float x = node.position.getXClamped(getWidth()),
-                y = node.position.getYClamped(getHeight());
+        float x = node.position.getXClamped((short)getWidth()),
+                y = node.position.getYClamped((short)getHeight());
 
         // Selected only: Outline A
         if (node.selected) {
@@ -138,8 +138,8 @@ public class NodeView extends View {
     }
 
     private void DrawNodeLine (Node cur, Node next, float x, float y, Canvas canvas) {
-        float xNext = next.position.getXClamped(getWidth());
-        float yNext = next.position.getYClamped(getHeight());
+        float xNext = next.position.getXClamped((short)getWidth());
+        float yNext = next.position.getYClamped((short)getHeight());
         paint.setColor(colourNodeLine);
         canvas.drawLine(x, y, xNext, yNext, paint);
     }
@@ -158,7 +158,7 @@ public class NodeView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        Vector2 touchPos = new Vector2(event.getX(), event.getY());
+        Vector2 touchPos = new Vector2((short)event.getX(), (short)event.getY());
         touchDelta = touchPos.sub(oldTouch);
         oldTouch = touchPos;
 
@@ -168,7 +168,7 @@ public class NodeView extends View {
                 List<Node> nodes = MainActivity.nodes;
                 for (int i = 0; i < nodes.size(); i++) {
                     Node node = nodes.get(i);
-                    if (node.position.distance(touchPos) < 30.0f) {
+                    if (node.position.distance(touchPos) < 50.0f) {
                         setSelectedNode(node, i);
                         break;
                     }
@@ -177,12 +177,13 @@ public class NodeView extends View {
 
             case (MotionEvent.ACTION_MOVE): {
                 // Touch move pans the selected node. (Removed for usability reasons. Was multiplied with touchDelta)
-                //float dist = MainActivity.selectedNode.position.distance(touchPos);
-                //float multiplier = 0.4f + (1.0f - Utils.clamp(dist / 100.0f, 0.0f, 1.0f)) * 0.6f;
+                float dist = MainActivity.selectedNode.position.distance(touchPos);
+                float multiplier = 0.5f + (1.0f - Utils.clamp(dist / 100.0f, 0.0f, 1.0f)) * 0.5f;
+                multiplier = Utils.lerp(multiplier, 1.0f, 1.0f - Utils.clamp01(dist / 90.0f));
                 Node n = MainActivity.selectedNode;
-                n.position.addTo(touchDelta);
-                n.position.setX((int)n.position.getXClamped(getWidth()));
-                n.position.setY((int)n.position.getYClamped(getHeight()));
+                n.position.addTo(touchDelta.mul(multiplier));
+                n.position.x = (short)n.position.getXClamped((short)getWidth());
+                n.position.y = (short)n.position.getYClamped((short)getHeight());
                 //System.out.println(touchDelta.getY() + ", " + touchDelta.getY());
 
                 // Refresh control

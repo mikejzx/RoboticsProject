@@ -1,29 +1,27 @@
 package io.mikejzx.github.roboticsproject;
 
 public class Vector2 {
-    private float x = 0.0f;
-    private float y = 0.0f;
+    public short x = 0;
+    public short y = 0;
 
-    public static final Vector2 zero = new Vector2(0.0f, 0.0f);
-    public static final Vector2 one = new Vector2(1.0f, 1.0f);
+    public static final Vector2 zero = new Vector2((short)0, (short)0);
+    public static final Vector2 one = new Vector2((short)1, (short)1);
 
-    public float getX() { return x; }
-    public float getY() { return y; }
-    public float getXClamped(float bound) { return Utils.clamp(x, 0, bound); }
-    public float getYClamped(float bound) { return Utils.clamp(y, 0, bound); }
-    public void setX(float newX) { x = newX;  }
-    public void setY(float newY) { y = newY; }
+    public short getXClamped(short bound) { return (short)Utils.clamp(x, 0, bound); }
+    public short getYClamped(short bound) { return (short)Utils.clamp(y, 0, bound); }
 
-    public Vector2() { setX(0); setY(0); }
-    public Vector2(float X, float Y) { setX(X); setY(Y); }
-    public Vector2(Vector2 copy) { setX(copy.x); setY(copy.y); }
+    public Vector2() { x = (short)0; y = (short)0; }
+    public Vector2(short X, short Y) { x = X; y = Y; }
+    public Vector2(Vector2 copy) { x = copy.x; y = copy.y; }
 
-    public boolean equals (Vector2 other) {
-        return (this.x == other.x) && (this.y == other.y);
+    public boolean equals (Vector2 other) { 
+    	return (this.x == other.x) && (this.y == other.y); 
     }
 
     public Vector2 add (Vector2 other) {
-        return new Vector2(x + other.x, y + other.y);
+    	return new Vector2(
+			(short)(x + other.x), 
+			(short)(y + other.y));
     }
 
     public void addTo (Vector2 other) {
@@ -32,11 +30,14 @@ public class Vector2 {
     }
 
     public Vector2 sub (Vector2 other) {
-        return new Vector2(x - other.x, y - other.y);
+        return new Vector2(
+    		(short)(x - other.x), 
+    		(short)(y - other.y));
     }
 
     public Vector2 mul (float multiplier) {
-        return new Vector2(x * multiplier, y * multiplier);
+        return new Vector2((short)Math.round(x * multiplier), 
+        	(short)Math.round(y * multiplier));
     }
 
     public float distance (Vector2 other) {

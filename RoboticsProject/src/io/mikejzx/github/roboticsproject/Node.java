@@ -6,12 +6,12 @@ public class Node {
 
     public boolean selected = false;
 
-    public Node(float x, float y) {
+    public Node(short x, short y) {
         setPosition(x, y);
     }
 
-    public void setPosition (float newX, float newY) {
-        position.setX(newX);
-        position.setY(newY);
+    public void setPosition (short newX, short newY) {
+        position.x = newX;
+        position.y = newY;
     }
 }

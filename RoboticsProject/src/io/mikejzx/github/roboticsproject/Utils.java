@@ -13,4 +13,8 @@ public final class Utils {
     public static int lerp(int a, int b, float t) {
         return Math.round(a * (1.0f - t) + b * t);
     }
+    
+    public static float lerp(float a, float b, float t) {
+        return a * (1.0f - t) + b * t;
+    }
 }
