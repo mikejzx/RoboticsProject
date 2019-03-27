@@ -50,7 +50,7 @@ public class MainActivity extends Activity {
         	.setIcon(android.R.drawable.ic_dialog_info);
         dialogAlert = dialogBuilder.create();
         
-        bt = new BluetoothHandler(this);
+        //bt = new BluetoothHandler(this);
 
         nodes.clear();
         nodes.add(new Node((short)150, (short)600));
@@ -64,14 +64,14 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        bt.onResume();
+        //bt.onResume();
     }
 
     public void btn_upload(View view) {
         // TODO: implement bluetooth functions...
         byte[] buffer = serialiseNodeData();
         String dataString = getSerialisedDataHexString(buffer);
-        bt.writeData(buffer);
+        //bt.writeData(buffer);
         System.out.println("Sent packet to bluetooth device containing: \n" + dataString);
     }
     
@@ -95,11 +95,15 @@ public class MainActivity extends Activity {
     	// Serialised Vector2's into binary form:
     	// Vector2's will be 4-bytes long. (Because both X & Y are 16-bit ints)
     	int nodeCount = nodes.size();
-        int packetSize = nodeCount * 4;
+        int packetSize = (nodeCount * 4) + 2; // +2 b/c to store size, and scale.
         byte[] serialisedData = new byte[packetSize];
         
         // First byte in packet represents the number of nodes. 
-        // (8-bit is fine because node count is clamped from 0 to 100)
+        // Second represents scale.
+        // (8-bit int is fine because node count is clamped from 0 to 100)
+        serialisedData[0] = (byte)nodeCount;
+        serialisedData[1] = NodeView.nodeScale;
+        
         for (int i = 0; i < nodeCount; i++) {
         	Vector2 node = nodes.get(i).position;
         	byte[] nodeBytes = {
@@ -107,7 +111,7 @@ public class MainActivity extends Activity {
         		(byte)(node.y & 0xFF), (byte)((node.y >> 8) & 0xFF)
         	};
         	for (int b = 0; b < 4; b++) {
-        		serialisedData[(i * 4) + b] = nodeBytes[b];
+        		serialisedData[(i * 4) + b + 2] = nodeBytes[b];
         	}
         }
         return serialisedData;
@@ -120,10 +124,12 @@ public class MainActivity extends Activity {
     
     private static String getSerialisedDataHexString (byte[] buffer) {
     	StringBuilder hexData = new StringBuilder();
-        for (int i = 0; i < buffer.length; i++) {
+    	hexData.append(String.format("Byte0 (size)  = 0x%02X%s", buffer[0] & 0xFF, "\n"));
+    	hexData.append(String.format("Byte1 (scale) = 0x%02X%s", buffer[1] & 0xFF, "\n"));
+        for (int i = 2; i < buffer.length; i++) {
         	String add = " ";
-        	if ((i + 1) % 2 == 0) { add = ", "; }
-        	if ((i + 1) % 4 == 0) { add = "\n"; }
+        	if ((i - 1) % 2 == 0) { add = ", "; }
+        	if ((i - 1) % 4 == 0) { add = "\n"; }
         	hexData.append(String.format("0x%02X%s", buffer[i] & 0xFF, add));
         }
         return hexData.toString();

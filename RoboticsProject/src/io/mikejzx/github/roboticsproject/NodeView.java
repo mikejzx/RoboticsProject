@@ -19,15 +19,21 @@ public class NodeView extends View {
     private boolean initialised = false;
     public static NodeView instance;
 
+    public static byte nodeScale = 26; // Around 10 m by default
+    
     private Handler handler = new Handler();
     private Vector2 oldTouch = new Vector2(),
             touchDelta = new Vector2();
 
     private static final int colourBg =  Color.parseColor("#EEEEEE");
     private static final int colourText =  Color.parseColor("#111111");
+    private static final int colourText2 =  Color.parseColor("#333333");
     private static final int colourNodeLine = Color.parseColor("#002288");
     private static final int colourNode =  Color.parseColor("#EEEECC");
     private static final int colourNodeSelected =  Color.parseColor("#AAFFFF");
+    
+    private static final int colourScaleBg =  Color.parseColor("#888888");
+    private static final int colourScaleFg =  Color.parseColor("#AAAAAA");
 
 
     public NodeView (Context context) {
@@ -105,6 +111,22 @@ public class NodeView extends View {
         if (selectedNode != null) {
             DrawSelectedNode(selectedNode, canvas);
         }
+        
+        int w = getWidth(), h = getHeight();
+        
+        // Draw scale button (+)
+        paint.setColor(colourScaleBg);
+        canvas.drawRect(100, 100, 100, 100, paint);
+        paint.setColor(colourScaleFg);
+        
+        // Draw side text representing scale.
+        paint.setColor(colourText2);
+        paint.setTextSize(30.0f);
+        canvas.rotate(-90.0f);
+        canvas.translate(-getWidth(), (getHeight() / 2) - getWidth() + 60);
+        int realLength = Math.round(((float)nodeScale / 255.0f) * 100.0f);
+        canvas.drawText(String.format("~%d m", realLength), getWidth() / 2, getHeight() / 2, paint);
+        //canvas.rotate(90.0f);
     }
 
     private void DrawSelectedNode (Node node, Canvas canvas) {
