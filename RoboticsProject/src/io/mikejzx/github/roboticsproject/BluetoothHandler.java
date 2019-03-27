@@ -16,7 +16,7 @@ https://wingoodharry.wordpress.com/2014/04/15/android-sendreceive-data-with-ardu
 
 // STILL NEED TO DO: CREATE A BLUETOOTH DEVICE SELECTION ACTIVITY.
 
-public class BluetoothHandler {
+public class BlueToothHandler {
 
     private BluetoothAdapter btAdapter;
     private BluetoothSocket btSocket;
@@ -32,7 +32,7 @@ public class BluetoothHandler {
     private final OutputStream streamOut;
 
 
-    public BluetoothHandler(Activity activity) {
+    public BlueToothHandler(Activity activity) {
         this.a = activity;
         btAdapter = BluetoothAdapter.getDefaultAdapter();
 

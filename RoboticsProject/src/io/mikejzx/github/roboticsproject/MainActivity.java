@@ -7,6 +7,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -28,10 +29,12 @@ public class MainActivity extends Activity {
     public static Node selectedNode = null;
     public static int selectedNodeIndex = -1;
 
-    public static BluetoothHandler bt;
+    public static BlueToothHandler bt;
     
     private static AlertDialog dialogAlert;
     private static Builder dialogBuilder;
+    
+    private static Intent startBtActivity;
 
     // Called on application load
     @Override
@@ -58,6 +61,8 @@ public class MainActivity extends Activity {
         nodes.add(new Node((short)400, (short)200));
         nodes.add(new Node((short)450, (short)500));
         NodeView.setSelectedNode(nodes.get(0), 0);
+        
+        startBtActivity = new Intent(MainActivity.this, BlueToothActivity.class);
     }
 
     // Called on application RESUME, (i.e: When the application is re-opened after minimisation)
@@ -83,6 +88,11 @@ public class MainActivity extends Activity {
 	    		dialogBuilder.setMessage("Serialised hex data for signed 16-bit vectors: \n\n" +  serialiseNodeDataString());
 	    		dialogAlert = dialogBuilder.create();
 	            dialogAlert.show();
+	    	} return true;
+	    	
+	    	case (R.id.action_btdevices): {
+	    		System.out.println("Menu clicked");
+	    		startActivityForResult(startBtActivity, 0);
 	    	} return true;
     	
     		default: {
