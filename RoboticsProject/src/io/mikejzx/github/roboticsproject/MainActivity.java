@@ -29,7 +29,7 @@ public class MainActivity extends Activity {
     public static Node selectedNode = null;
     public static int selectedNodeIndex = -1;
 
-    public static BlueToothHandler bt;
+    //public static BlueToothHandler bt;
     
     private static AlertDialog dialogAlert;
     private static Builder dialogBuilder;
@@ -52,8 +52,6 @@ public class MainActivity extends Activity {
         	.setCancelable(false)
         	.setIcon(android.R.drawable.ic_dialog_info);
         dialogAlert = dialogBuilder.create();
-        
-        //bt = new BluetoothHandler(this);
 
         nodes.clear();
         nodes.add(new Node((short)150, (short)600));
@@ -62,15 +60,24 @@ public class MainActivity extends Activity {
         nodes.add(new Node((short)450, (short)500));
         NodeView.setSelectedNode(nodes.get(0), 0);
         
-        startBtActivity = new Intent(MainActivity.this, BlueToothActivity.class);
+        //startBtActivity = new Intent(MainActivity.this, BlueToothActivity.class);
+        
+        //startActivityForResult(startBtActivity, 1);
+        //bt = new BlueToothHandler(this);
     }
 
     // Called on application RESUME, (i.e: When the application is re-opened after minimisation)
-    @Override
-    protected void onResume() {
+    /*@Override
+    public void onResume() {
         super.onResume();
-        //bt.onResume();
+        bt.onResume();
     }
+    
+    @Override
+    public void onPause() {
+    	super.onPause();
+    	bt.onPause();
+    }*/
 
     public void btn_upload(View view) {
         // TODO: implement bluetooth functions...
@@ -99,6 +106,13 @@ public class MainActivity extends Activity {
     			return super.onOptionsItemSelected(item);
     		}
     	}
+    }
+    
+    @Override
+    public boolean onCreateOptionsMenu (Menu menu) {
+    	MenuInflater inflator =  getMenuInflater();
+    	inflator.inflate(R.menu.menu_main, menu);
+		return true;
     }
     
     private static byte[] serialiseNodeData () {
@@ -143,13 +157,6 @@ public class MainActivity extends Activity {
         	hexData.append(String.format("0x%02X%s", buffer[i] & 0xFF, add));
         }
         return hexData.toString();
-    }
-    
-    @Override
-    public boolean onCreateOptionsMenu (Menu menu) {
-    	MenuInflater inflator =  getMenuInflater();
-    	inflator.inflate(R.menu.menu_main, menu);
-		return true;
     }
     
     public void btn_ins(View view) {

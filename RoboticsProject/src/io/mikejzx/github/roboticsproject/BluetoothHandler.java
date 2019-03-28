@@ -35,6 +35,10 @@ public class BlueToothHandler {
     public BlueToothHandler(Activity activity) {
         this.a = activity;
         btAdapter = BluetoothAdapter.getDefaultAdapter();
+        
+        checkBtState ();
+        
+        onResume();
 
         OutputStream tmpOut = null;
         // Try create I/O streams
@@ -58,10 +62,10 @@ public class BlueToothHandler {
     }
 
     public void onResume() {
-        // TODO: CONNECT TO THE BLUETOOTH DEVICE HERE.
-
+    	checkBtState ();
         Intent intent = a.getIntent();
-        //macAddress = intent.getStringExtra(DeviceListActivity.EXTRA_DEVICE_ACTIVITY);
+        macAddress = intent.getStringExtra(BlueToothActivity.EXTRA_DEVICE_ADDRESS);
+        if (macAddress == null) { System.err.println("Null BT address."); return; }
         BluetoothDevice device = btAdapter.getRemoteDevice(macAddress);
 
         // Create socket

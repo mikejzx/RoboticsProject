@@ -11,6 +11,8 @@ import android.view.View;
 
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class NodeView extends View {
@@ -35,6 +37,8 @@ public class NodeView extends View {
     private static final int colourScaleBg =  Color.parseColor("#888888");
     private static final int colourScaleFg =  Color.parseColor("#AAAAAA");
 
+    private static final float touchDistanceThreshold = 100.0f;
+    
 
     public NodeView (Context context) {
         super(context);
@@ -180,20 +184,28 @@ public class NodeView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        Vector2 touchPos = new Vector2((short)event.getX(), (short)event.getY());
+        final Vector2 touchPos = new Vector2((short)event.getX(), (short)event.getY());
         touchDelta = touchPos.sub(oldTouch);
         oldTouch = touchPos;
 
         switch (event.getAction()) {
             case (MotionEvent.ACTION_DOWN): {
                 // Touch down checks for a nearby node and selects it.
-                List<Node> nodes = MainActivity.nodes;
-                for (int i = 0; i < nodes.size(); i++) {
-                    Node node = nodes.get(i);
-                    if (node.position.distance(touchPos) < 50.0f) {
-                        setSelectedNode(node, i);
-                        break;
-                    }
+            	// (ARRAYLIST *MUST* BE INSTANTIATED SO THE ORIGINAL REF DOESNT GET SORTED.)
+                List<Node> nodes = new ArrayList<Node>(MainActivity.nodes);
+                // Sort by distance, so shortest distance node is selected first.
+                // Instead of iterating through the node list (was old method...)
+                Collections.sort(nodes, new Comparator<Node>() {
+					@Override
+					public int compare(Node lhs, Node rhs) {
+						lhs.setComparer(lhs.position.distance(touchPos));
+						rhs.setComparer(rhs.position.distance(touchPos));
+						return lhs.getComparer().compareTo(rhs.getComparer());
+					}
+                });
+                Node n = nodes.get(0);
+                if (n.getComparer() < touchDistanceThreshold) {
+                    setSelectedNode(n, 0);
                 }
             } break;
 
