@@ -112,7 +112,7 @@ public class MainActivity extends Activity implements IToastable {
 	    		System.out.println("Menu clicked");
 	    		StringBuilder byteCount = new StringBuilder(); // StringBuilder will be passed 'by reference'
 	    		String hexData = serialiseNodeDataString(byteCount);
-	    		dialogBuilder.setMessage("Serialised hex data for signed 16-bit vectors: \n" + byteCount + "bytes\n\n" +  hexData);
+	    		dialogBuilder.setMessage("Serialised hex data for signed 16-bit vectors: \n" + byteCount + "\n\n" +  hexData);
 	    		dialogAlert = dialogBuilder.create();
 	            dialogAlert.show();
 	    	} return true;
@@ -164,8 +164,9 @@ public class MainActivity extends Activity implements IToastable {
         byte[] serialisedData = serialiseNodeData();
         byteCount.setLength(0);
         int countBytes = serialisedData.length;
-        float countKibibytes = Math.round(countBytes * 102400.0f) / 100.0f;
-        byteCount.append(String.format("%d bytes (~%d KiB)", countBytes, countKibibytes));
+        float countKibibytes = Math.round(countBytes / 1024.0f * 100.0f) / 100.0f;
+        String szCountKibibytes = String.format(java.util.Locale.UK, "%.2f", countKibibytes);
+        byteCount.append(String.format("%d bytes (~%s KiB)", countBytes, szCountKibibytes));
         return getSerialisedDataHexString(serialisedData);
     }
     

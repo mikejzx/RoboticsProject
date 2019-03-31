@@ -11,6 +11,7 @@
     <item
         android:id="@+id/action_debuginfo"
         android:title="@string/action_debuginfo"
+        android:showAsAction="ifRoom"
         />
 
 </menu>

@@ -145,7 +145,6 @@ public class BlueToothHandler implements IToastable {
     	return true;
     }
     
-    // TODO: SHOW HOW MANY BYTES, OR MB, OR KiB are in packet
     private void getDevice(int idx) {
     	// Retrieve MAC address.
     	++idx; // Not sure why i needed this.
