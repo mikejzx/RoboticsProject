@@ -22,7 +22,7 @@
 		tools:layout_constraintBottom_toBottomOf="parent"
 		tools:layout_constraintEnd_toEndOf="parent"
 		tools:layout_constraintStart_toStartOf="parent"
-		android:gravity="bottom|left|center_vertical"
+		android:gravity="bottom|start|center_vertical"
 		android:orientation="vertical">
 	</LinearLayout>
 
@@ -49,9 +49,8 @@
 	    android:layout_width="match_parent"
 	    android:layout_height="wrap_content"
 	    android:layout_alignParentBottom="true"
-	    android:layout_centerHorizontal="true"
 	    android:fontFamily="monospace"
-	    android:text="BlueTooth not attached."
+	    android:text="@string/lab_attach_status"
 	    android:textColor="@color/textColour"
 	    android:typeface="monospace" />
 
@@ -59,7 +58,7 @@
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_above="@+id/textView_static"
-		android:layout_alignLeft="@+id/textView_static"
+		android:layout_alignEnd="@+id/textView_static"
 		android:layout_marginBottom="39dp"
 		android:orientation="horizontal">
 
@@ -71,24 +70,32 @@
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:layout_weight="1"
 				android:fontFamily="monospace" android:onClick="btn_rm"
-				android:scrollHorizontally="false" android:text="Remove"
+				android:scrollHorizontally="false" android:text="@string/btn_remove"
 				android:textAllCaps="false" android:textStyle="bold"
 				android:typeface="monospace" />
 
 			<Button android:id="@+id/btn_add"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:fontFamily="monospace"
-				android:onClick="btn_ins" android:text="Insert"
+				android:onClick="btn_ins" android:text="@string/btn_insert"
 				android:textAllCaps="false" android:textStyle="bold"
 				android:typeface="monospace" />
 
 			<Button android:id="@+id/btn_upload"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:fontFamily="monospace"
-				android:onClick="btn_upload" android:text="Upload path"
+				android:onClick="btn_upload" android:text="@string/btn_upload"
 				android:textAllCaps="false" android:textStyle="bold"
 				android:typeface="monospace" />
 		</TableRow>
 	</TableLayout>
+
+	<Button
+	    android:id="@+id/btn_attach"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_alignBottom="@+id/textView_static"
+	    android:layout_alignEnd="@+id/tableLayout1"
+	    android:text="@string/btn_attach" />
 
 </RelativeLayout>

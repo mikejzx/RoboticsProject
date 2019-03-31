@@ -1,5 +1,10 @@
 package io.mikejzx.github.roboticsproject;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -9,16 +14,9 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-
 public class NodeView extends View {
 
     private Paint paint = new Paint();
-    private boolean initialised = false;
     public static NodeView instance;
 
     public static byte nodeScale = 26; // Around 10 m by default
@@ -127,9 +125,9 @@ public class NodeView extends View {
         paint.setColor(colourText2);
         paint.setTextSize(30.0f);
         canvas.rotate(-90.0f);
-        canvas.translate(-getWidth(), (getHeight() / 2) - getWidth() + 60);
+        canvas.translate(-w, (h / 2) - w + 60);
         int realLength = Math.round(((float)nodeScale / 255.0f) * 100.0f);
-        canvas.drawText(String.format("~%d m", realLength), getWidth() / 2, getHeight() / 2, paint);
+        canvas.drawText(String.format("~%d m", realLength), w / 2, h / 2, paint);
         //canvas.rotate(90.0f);
     }
 

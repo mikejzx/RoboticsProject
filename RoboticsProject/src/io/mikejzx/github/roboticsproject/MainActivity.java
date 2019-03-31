@@ -13,8 +13,9 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements IToastable {
 
     /*
         Developed by Michael
@@ -29,12 +30,10 @@ public class MainActivity extends Activity {
     public static Node selectedNode = null;
     public static int selectedNodeIndex = -1;
 
-    //public static BlueToothHandler bt;
+    public static BlueToothHandler bt;
     
     private static AlertDialog dialogAlert;
     private static Builder dialogBuilder;
-    
-    private static Intent startBtActivity;
 
     // Called on application load
     @Override
@@ -60,24 +59,10 @@ public class MainActivity extends Activity {
         nodes.add(new Node((short)450, (short)500));
         NodeView.setSelectedNode(nodes.get(0), 0);
         
-        //startBtActivity = new Intent(MainActivity.this, BlueToothActivity.class);
+        bt = new BlueToothHandler(this);
         
-        //startActivityForResult(startBtActivity, 1);
-        //bt = new BlueToothHandler(this);
+        //Button btnAttach = (Button)findViewById(R.id.btn_attach);
     }
-
-    // Called on application RESUME, (i.e: When the application is re-opened after minimisation)
-    /*@Override
-    public void onResume() {
-        super.onResume();
-        bt.onResume();
-    }
-    
-    @Override
-    public void onPause() {
-    	super.onPause();
-    	bt.onPause();
-    }*/
 
     public void btn_upload(View view) {
         // TODO: implement bluetooth functions...
@@ -88,6 +73,12 @@ public class MainActivity extends Activity {
     }
     
     @Override
+    public void onActivityResult (int requestCode, int resultCode, Intent data) {
+    	super.onActivityResult(requestCode, resultCode, data);
+    	bt.onActivityResult(requestCode, resultCode, data);
+    }
+    
+    @Override
     public boolean onOptionsItemSelected (MenuItem item) {
     	switch (item.getItemId()) {
 	    	case (R.id.action_debuginfo): {
@@ -95,11 +86,6 @@ public class MainActivity extends Activity {
 	    		dialogBuilder.setMessage("Serialised hex data for signed 16-bit vectors: \n\n" +  serialiseNodeDataString());
 	    		dialogAlert = dialogBuilder.create();
 	            dialogAlert.show();
-	    	} return true;
-	    	
-	    	case (R.id.action_btdevices): {
-	    		System.out.println("Menu clicked");
-	    		startActivityForResult(startBtActivity, 0);
 	    	} return true;
     	
     		default: {
@@ -119,7 +105,8 @@ public class MainActivity extends Activity {
     	// Serialised Vector2's into binary form:
     	// Vector2's will be 4-bytes long. (Because both X & Y are 16-bit ints)
     	int nodeCount = nodes.size();
-        int packetSize = (nodeCount * 4) + 2; // +2 b/c to store size, and scale.
+    	final int extraBytes = 2;// +2 b/c to store size, and scale.
+        int packetSize = (nodeCount * 4) + extraBytes; 
         byte[] serialisedData = new byte[packetSize];
         
         // First byte in packet represents the number of nodes. 
@@ -128,6 +115,9 @@ public class MainActivity extends Activity {
         serialisedData[0] = (byte)nodeCount;
         serialisedData[1] = NodeView.nodeScale;
         
+        // TODO: Possible try merging the two control bytes into a single byte.
+        // by using LOWORD to store dataA, and storing dataB in the HIWORD.
+        
         for (int i = 0; i < nodeCount; i++) {
         	Vector2 node = nodes.get(i).position;
         	byte[] nodeBytes = {
@@ -135,7 +125,7 @@ public class MainActivity extends Activity {
         		(byte)(node.y & 0xFF), (byte)((node.y >> 8) & 0xFF)
         	};
         	for (int b = 0; b < 4; b++) {
-        		serialisedData[(i * 4) + b + 2] = nodeBytes[b];
+        		serialisedData[(i * 4) + b + extraBytes] = nodeBytes[b];
         	}
         }
         return serialisedData;
@@ -202,4 +192,9 @@ public class MainActivity extends Activity {
         }
         NodeView.setSelectedNode(nodes.get(selectedNodeIndex), selectedNodeIndex);
     }
+
+	@Override
+	public void log(String text) {
+		Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG).show();
+	}
 }

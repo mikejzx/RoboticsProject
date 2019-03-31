@@ -1,119 +1,154 @@
 package io.mikejzx.github.roboticsproject;
 
+import java.util.Set;
+
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.app.Activity;
+import android.view.Gravity;
+import android.widget.ArrayAdapter;
+import android.widget.TextView;
+import android.widget.Toast;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.UUID;
+public class BlueToothHandler implements IToastable {
 
-/*
-https://wingoodharry.wordpress.com/2014/04/15/android-sendreceive-data-with-arduino-using-bluetooth-part-2/
-*/
-
-// STILL NEED TO DO: CREATE A BLUETOOTH DEVICE SELECTION ACTIVITY.
-
-public class BlueToothHandler {
-
-    private BluetoothAdapter btAdapter;
-    private BluetoothSocket btSocket;
-    private Activity a;
-
-    // SPP UUID Service
-    private static final UUID BT_MODULE_UUID
-            = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-    private static String macAddress;
-
-    // Used for writing to the bt device. Input stream
-    // not included since nothing is being read
-    private final OutputStream streamOut;
-
-
+	private final Activity a;
+	private final BluetoothAdapter btAdapter;
+	private static final int BLUETOOTH_OK_REQUEST = 1;
+	
+	private final AlertDialog.Builder dialogBuilder;
+	
     public BlueToothHandler(Activity activity) {
         this.a = activity;
         btAdapter = BluetoothAdapter.getDefaultAdapter();
         
-        checkBtState ();
+        // Check if BlueTooth is supported. If not, insult the user and their device.
+        if (btAdapter == null) {
+        	log("BlueTooth functionality is not supported on this old potato.");
+        	dialogBuilder = null;
+        	return;
+        }
         
-        onResume();
-
-        OutputStream tmpOut = null;
-        // Try create I/O streams
-        try {
-            tmpOut = btSocket.getOutputStream();
-        }
-        catch (IOException e) {
-            System.err.println("ERROR getting input stream of bt socket.");
-        }
-        streamOut = tmpOut;
-    }
-
-    public void writeData(byte[] buffer) {
-        try {
-            streamOut.write(buffer);
-        }
-        catch (IOException e) {
-            System.err.println("ERROR writing to I/O stream : " + e.getMessage());
-            a.finish();
-        }
-    }
-
-    public void onResume() {
-    	checkBtState ();
-        Intent intent = a.getIntent();
-        macAddress = intent.getStringExtra(BlueToothActivity.EXTRA_DEVICE_ADDRESS);
-        if (macAddress == null) { System.err.println("Null BT address."); return; }
-        BluetoothDevice device = btAdapter.getRemoteDevice(macAddress);
-
-        // Create socket
-        try { btSocket = createBluetoothSocket(device); }
-        catch(IOException e) { System.err.println("ERROR creating bt socket: " + e.getMessage()); }
-
-        // Establish connection
-        try { btSocket.connect(); }
-        catch(IOException e) {
-            System.err.println("ERROR establishing bt socket connection: " + e.getMessage());
-            closeSocket();
-        }
-
-        // Test connection...
-        writeData(new String("x").getBytes());
-    }
-
-    public void onPause () {
-        closeSocket();
-    }
-
-    private void closeSocket () {
-        try {
-            btSocket.close();
-        }
-        catch (IOException e) {
-            System.err.println("ERROR closing bt socket..." + e.getMessage());
-        }
-    }
-
-    private BluetoothSocket createBluetoothSocket(BluetoothDevice device) throws IOException {
-        return device.createInsecureRfcommSocketToServiceRecord(BT_MODULE_UUID);
-    }
-
-    private void checkBtState () {
-        btAdapter = BluetoothAdapter.getDefaultAdapter();
-        if (btAdapter != null) {
-            if (!btAdapter.isEnabled()) {
-                System.out.print("Bluetooth disabled, prompting...");
-                Intent btEnable = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                a.startActivityForResult(btEnable, 1);
-            }
-            else {
-                System.out.print("Bluetooth enabled.");
-            }
+        // Check if Bluetooth is enabled on the device.
+        if (!btAdapter.isEnabled()) {
+        	// This intent kindly promopts user to enable BlueTooth on their potato.
+        	Intent btEnableRequest = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+       
+        	// Actually start the prompt
+        	a.startActivityForResult(btEnableRequest, BLUETOOTH_OK_REQUEST);
+        	log("BlueTooth is being enabled...");
         }
         else {
-            System.err.println("BLUETOOTH NOT SUPPORTED...");
+        	log("BlueTooth: O.K");
         }
+        
+        final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(a, android.R.layout.select_dialog_singlechoice);
+        
+        // Query the pre-discovered/bonded devices
+        Set<BluetoothDevice> devicesPaired = btAdapter.getBondedDevices();
+    	for (BluetoothDevice d : devicesPaired) {
+    		arrayAdapter.add(String.format("%s\n%s", d.getName(), d.getAddress()));
+    	}
+    	
+    	// Set up builder
+    	dialogBuilder = new AlertDialog.Builder(a)
+    		.setTitle("BlueTooth query");
+    	int checkedItem = 1;
+    	// Initialise radio-button list	
+    	// Only show devices if they actually exist
+    	if (devicesPaired.size() > 0) {
+    		dialogBuilder.setSingleChoiceItems(arrayAdapter, checkedItem,
+	    		new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						log("Item was checked: @ " + which);
+					}
+				})
+	    		// Show positive button
+	    		.setPositiveButton("O.K", new DialogInterface.OnClickListener() {
+		    		@Override
+		    		public void onClick (DialogInterface dialog, int which) {
+		    			log ("O.K was clicked.");
+		    		}
+		    	})
+	    		// and negative
+		    	.setNegativeButton("Cancel", null);
+    	}
+    	else {
+    		TextView textView = new TextView(a);
+    		textView.setText("\nNo devices discovered.\nPlease externally pair this device from "
+    				+ "Settings to the Arduino's BlueTooth module.\n\n");
+    		textView.setGravity(Gravity.CENTER_HORIZONTAL);
+    		dialogBuilder
+    			.setView(textView)
+	    		.setPositiveButton("O.K, I will do that sir", new DialogInterface.OnClickListener() {
+		    		@Override
+		    		public void onClick (DialogInterface dialog, int which) {
+		    			log ("O.K was clicked.");
+		    		}
+		    	});
+    	}
+    	dialogBuilder.create().show();
+    	
+    	
+    	// Initialise the dialog to display the devices (insanely messy, i know...)
+        /*dialogBuilder = new AlertDialog.Builder(a)
+    		.setTitle("BlueTooth device Select")
+        	.setMessage("Not initialised...")
+        	.setCancelable(true)
+        	.setIcon(android.R.drawable.ic_dialog_dialer)
+        	// Lambda's would be nice ffs...
+        	.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) { dialog.dismiss(); }
+        	})
+        	.setAdapter(arrayAdapter, new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					String szName = arrayAdapter.getItem(which);
+					AlertDialog.Builder inner = new AlertDialog.Builder(a)
+						.setMessage(szName)
+						.setTitle("Selected Device is")
+						.setPositiveButton("O.K", new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								dialog.dismiss();
+							}
+						});
+					inner.show();
+				}
+			});
+        dialogBuilder.show();*/
+    }
+    
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    	if (requestCode != BLUETOOTH_OK_REQUEST) { 
+    		return; 
+    	}
+    	switch (resultCode) {
+    		// Successful request
+	    	case (Activity.RESULT_OK): {
+	    		log("BlueTooth successfully Enabled.");
+	    	} break;
+	    	
+	    	// Failed request
+	    	case (Activity.RESULT_CANCELED): {
+	    		log("There was an error in the attempt to enable Bluetooth.");
+	    	} break;
+	    	
+	    	// Unknown
+	    	default: {
+	    		log("An unexpected error occurred while attempting to enable Bluetooth.");
+	    	}
+    	}
+    }
+    
+    // Wrapper for Toast.makeText(). Really keeps shit alot shorter.
+    @Override
+    public void log(String txt) {
+    	Toast.makeText(a.getApplicationContext(), txt, Toast.LENGTH_LONG).show();
     }
 }

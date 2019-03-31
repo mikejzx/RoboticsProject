@@ -4,8 +4,14 @@
     <string name="app_name">NodeHub</string>
     <string name="action_settings">Settings</string>
     <string name="activity_main_name">Node Editor</string>
-    <string name="activity_bt_name">BlueTooth Device Select</string>
     <string name="action_debuginfo">Show hex data</string>
-    <string name="action_btdevices">Choose BlueTooth Device</string>
-
+    
+    <!-- Just because i'm sick of these stupid warnings -->
+    <string name="btn_attach">Attach</string>
+	<string name="lab_attach_status">BlueTooth not Attached.</string>
+	
+	<string name="btn_insert">Insert</string>
+	<string name="btn_remove">Remove</string>
+	<string name="btn_upload">Upload path</string>
+    
 </resources>

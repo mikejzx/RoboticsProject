@@ -12,10 +12,5 @@
         android:id="@+id/action_debuginfo"
         android:title="@string/action_debuginfo"
         />
-    
-    <item
-        android:id="@+id/action_btdevices"
-        android:title="@string/action_btdevices"
-        />
 
 </menu>
