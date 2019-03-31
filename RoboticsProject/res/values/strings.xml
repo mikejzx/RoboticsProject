@@ -8,7 +8,8 @@
     
     <!-- Just because i'm sick of these stupid warnings -->
     <string name="btn_attach">Attach</string>
-	<string name="lab_attach_status">BlueTooth not Attached.</string>
+	<string name="lab_attach_status_false">BlueTooth not Attached.</string>
+	<string name="lab_attach_status_true">BlueTooth attached.</string>
 	
 	<string name="btn_insert">Insert</string>
 	<string name="btn_remove">Remove</string>

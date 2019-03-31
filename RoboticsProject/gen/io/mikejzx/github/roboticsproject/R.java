@@ -35,11 +35,11 @@ public final class R {
         public static final int btn_attach=0x7f090009;
         public static final int btn_rm=0x7f090006;
         public static final int btn_upload=0x7f090008;
+        public static final int lab_btstatus=0x7f090003;
         public static final int linearLayout1=0x7f090000;
         public static final int linearLayout2=0x7f090001;
         public static final int tableLayout1=0x7f090004;
         public static final int tableRow1=0x7f090005;
-        public static final int textView_static=0x7f090003;
         public static final int view_nodes=0x7f090002;
     }
     public static final class layout {
@@ -56,10 +56,11 @@ public final class R {
         /**  Just because i'm sick of these stupid warnings 
          */
         public static final int btn_attach=0x7f060004;
-        public static final int btn_insert=0x7f060006;
-        public static final int btn_remove=0x7f060007;
-        public static final int btn_upload=0x7f060008;
-        public static final int lab_attach_status=0x7f060005;
+        public static final int btn_insert=0x7f060007;
+        public static final int btn_remove=0x7f060008;
+        public static final int btn_upload=0x7f060009;
+        public static final int lab_attach_status_false=0x7f060005;
+        public static final int lab_attach_status_true=0x7f060006;
     }
     public static final class style {
         /** 

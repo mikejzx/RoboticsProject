@@ -1,11 +1,15 @@
 package io.mikejzx.github.roboticsproject;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Set;
+import java.util.UUID;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.view.Gravity;
@@ -13,11 +17,25 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+/*
+	Invaluable source:
+	https://www.androidauthority.com/adding-bluetooth-to-your-app-742538/
+*/
+
 public class BlueToothHandler implements IToastable {
 
+	private BluetoothDevice btDevice;
+	private BluetoothSocket btSocket;
+	private OutputStream oStream;
+	private final ArrayAdapter<String> arrayAdapter;
+	
 	private final Activity a;
 	private final BluetoothAdapter btAdapter;
 	private static final int BLUETOOTH_OK_REQUEST = 1;
+	
+	// Global identifier for the application's bluetooth service.
+	// TODO: MAKE SURE THE ARDUINO USES THE SAME GUID OR IT MAY NOT CONNECT.
+	private static final UUID BT_GUID = UUID.fromString("34286088-10f5-45bd-98c8-31bd8d6c7351");
 	
 	private final AlertDialog.Builder dialogBuilder;
 	
@@ -29,6 +47,7 @@ public class BlueToothHandler implements IToastable {
         if (btAdapter == null) {
         	log("BlueTooth functionality is not supported on this old potato.");
         	dialogBuilder = null;
+        	arrayAdapter = null;
         	return;
         }
         
@@ -45,7 +64,7 @@ public class BlueToothHandler implements IToastable {
         	log("BlueTooth: O.K");
         }
         
-        final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(a, android.R.layout.select_dialog_singlechoice);
+        arrayAdapter = new ArrayAdapter<String>(a, android.R.layout.select_dialog_singlechoice);
         
         // Query the pre-discovered/bonded devices
         Set<BluetoothDevice> devicesPaired = btAdapter.getBondedDevices();
@@ -56,7 +75,7 @@ public class BlueToothHandler implements IToastable {
     	// Set up builder
     	dialogBuilder = new AlertDialog.Builder(a)
     		.setTitle("BlueTooth query");
-    	int checkedItem = 1;
+    	int checkedItem = 0;
     	// Initialise radio-button list	
     	// Only show devices if they actually exist
     	if (devicesPaired.size() > 0) {
@@ -71,7 +90,8 @@ public class BlueToothHandler implements IToastable {
 	    		.setPositiveButton("O.K", new DialogInterface.OnClickListener() {
 		    		@Override
 		    		public void onClick (DialogInterface dialog, int which) {
-		    			log ("O.K was clicked.");
+		    			getDevice(which);
+		    			connectDevice();
 		    		}
 		    	})
 	    		// and negative
@@ -84,44 +104,88 @@ public class BlueToothHandler implements IToastable {
     		textView.setGravity(Gravity.CENTER_HORIZONTAL);
     		dialogBuilder
     			.setView(textView)
-	    		.setPositiveButton("O.K, I will do that sir", new DialogInterface.OnClickListener() {
-		    		@Override
-		    		public void onClick (DialogInterface dialog, int which) {
-		    			log ("O.K was clicked.");
-		    		}
-		    	});
+	    		.setPositiveButton("O.K, I will do that sir", null);
     	}
     	dialogBuilder.create().show();
+    }
+    
+    
+    // TODO: SHOW HOW MANY BYTES, OR MB, OR KiB are in packet
+    private void getDevice(int idx) {
+    	// Retrieve MAC address.
+    	++idx; // Not sure why i needed this.
+    	System.out.println("WHICH=" + idx);
+    	String info = arrayAdapter.getItem(idx);
+    	// MAC address is last 17 chars in name
+    	String mac = info.substring(info.length() - 17);
+    	log("Attempting to connect @ MAC address: " + mac);
+    	btDevice = btAdapter.getRemoteDevice(mac);
+    }
+    
+    // Initiate connection
+    private void connectDevice () {
+    	if (btDevice == null) {
+    		log("Bluetooth device null. Please connect ffs");
+    		onDeviceDisconnect();
+    		return;
+    	}
+    	try {
+    		// Insecure since the bluetooth module is below version 2.1.
+    		btSocket = btDevice.createInsecureRfcommSocketToServiceRecord(BT_GUID);
+    	} catch (Exception e) {
+    		handleException(e, "Error creating Bluetooth socket.");
+    		onDeviceDisconnect();
+    		return;
+    	}
     	
+    	// Try initiate outgoing connection request.
+    	try {
+    		btSocket.connect();
+    	} catch (Exception e) {
+    		handleException(e, "Error initiating outgoing connection request.");
+    		onDeviceDisconnect();
+    		return;
+    	}
+    	log("Successfully connected.");
     	
-    	// Initialise the dialog to display the devices (insanely messy, i know...)
-        /*dialogBuilder = new AlertDialog.Builder(a)
-    		.setTitle("BlueTooth device Select")
-        	.setMessage("Not initialised...")
-        	.setCancelable(true)
-        	.setIcon(android.R.drawable.ic_dialog_dialer)
-        	// Lambda's would be nice ffs...
-        	.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) { dialog.dismiss(); }
-        	})
-        	.setAdapter(arrayAdapter, new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					String szName = arrayAdapter.getItem(which);
-					AlertDialog.Builder inner = new AlertDialog.Builder(a)
-						.setMessage(szName)
-						.setTitle("Selected Device is")
-						.setPositiveButton("O.K", new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int which) {
-								dialog.dismiss();
-							}
-						});
-					inner.show();
-				}
-			});
-        dialogBuilder.show();*/
+    	// Retrieve I/O streams
+    	try {
+    		oStream = btSocket.getOutputStream();
+    	}
+    	catch (Exception e) {
+    		handleException(e, "Error fetching I/O streams.");
+    		onDeviceDisconnect();
+    		return;
+    	}
+    	log ("I/O streams successfully fetched. Data transmission is now enabled.");
+    	onDeviceConnect();
+    }
+    
+    private void onDeviceConnect() {
+    	System.out.println("onDeviceConnect()");
+    	((MainActivity)a).setBtStatusDisplay(true);
+    }
+    
+    private void onDeviceDisconnect () {
+    	System.out.println("onDeviceDisconnect()");
+    	((MainActivity)a).setBtStatusDisplay(false);
+    }
+    
+    // Free resources, close socket connection.
+    public void dispose () {
+    	if (btSocket == null) {
+    		return;
+    	}
+    	try {
+    		btSocket.close();
+		} catch (IOException e) {
+			handleException(e, "Error freeing btSocket resources.");
+		}
+    }
+    
+    private void handleException (Exception e, String s) {
+    	e.printStackTrace();
+		log(s + ", \n [Verbose:]" + e.getMessage());
     }
     
     public void onActivityResult(int requestCode, int resultCode, Intent data) {

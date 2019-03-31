@@ -13,6 +13,9 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity implements IToastable {
@@ -61,7 +64,13 @@ public class MainActivity extends Activity implements IToastable {
         
         bt = new BlueToothHandler(this);
         
-        //Button btnAttach = (Button)findViewById(R.id.btn_attach);
+        Button btnAttach = (Button)findViewById(R.id.btn_attach);
+        btnAttach.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				log("Not yet implemented...");
+			}
+        });
     }
 
     public void btn_upload(View view) {
@@ -70,6 +79,20 @@ public class MainActivity extends Activity implements IToastable {
         String dataString = getSerialisedDataHexString(buffer);
         //bt.writeData(buffer);
         System.out.println("Sent packet to bluetooth device containing: \n" + dataString);
+    }
+    
+    public void setBtStatusDisplay(boolean active) {
+    	String szLabel = active 
+    			? getString(R.string.lab_attach_status_true) 
+    			: getString(R.string.lab_attach_status_false);
+    	TextView label = (TextView)findViewById(R.id.lab_btstatus);
+    	label.setText(szLabel);
+    }
+    
+    @Override
+    protected void onDestroy() {
+    	bt.dispose();
+    	super.onDestroy();
     }
     
     @Override
@@ -83,7 +106,9 @@ public class MainActivity extends Activity implements IToastable {
     	switch (item.getItemId()) {
 	    	case (R.id.action_debuginfo): {
 	    		System.out.println("Menu clicked");
-	    		dialogBuilder.setMessage("Serialised hex data for signed 16-bit vectors: \n\n" +  serialiseNodeDataString());
+	    		StringBuilder byteCount = new StringBuilder(); // StringBuilder will be passed 'by reference'
+	    		String hexData = serialiseNodeDataString(byteCount);
+	    		dialogBuilder.setMessage("Serialised hex data for signed 16-bit vectors: \n" + byteCount + "bytes\n\n" +  hexData);
 	    		dialogAlert = dialogBuilder.create();
 	            dialogAlert.show();
 	    	} return true;
@@ -131,8 +156,12 @@ public class MainActivity extends Activity implements IToastable {
         return serialisedData;
     }
     
-    private static String serialiseNodeDataString() {
+    private static String serialiseNodeDataString(StringBuilder byteCount) {
         byte[] serialisedData = serialiseNodeData();
+        byteCount.setLength(0);
+        int countBytes = serialisedData.length;
+        float countKibibytes = Math.round(countBytes * 102400.0f) / 100.0f;
+        byteCount.append(String.format("%d bytes (~%d KiB)", countBytes, countKibibytes));
         return getSerialisedDataHexString(serialisedData);
     }
     
