@@ -27,6 +27,8 @@ public class BlueToothHandler implements IToastable {
 	private BluetoothDevice btDevice;
 	private BluetoothSocket btSocket;
 	private OutputStream oStream;
+	private boolean connected = false;
+	private final boolean supported;
 	private final ArrayAdapter<String> arrayAdapter;
 	
 	private final Activity a;
@@ -38,20 +40,48 @@ public class BlueToothHandler implements IToastable {
 	private static final UUID BT_GUID = UUID.fromString("34286088-10f5-45bd-98c8-31bd8d6c7351");
 	
 	private final AlertDialog.Builder dialogBuilder;
+	private final AlertDialog.Builder dialogBuilderError;
 	
     public BlueToothHandler(Activity activity) {
         this.a = activity;
         btAdapter = BluetoothAdapter.getDefaultAdapter();
+        onDeviceDisconnect();
         
         // Check if BlueTooth is supported. If not, insult the user and their device.
         if (btAdapter == null) {
-        	log("BlueTooth functionality is not supported on this old potato.");
+        	supported = false;
+        	checkSupported();
         	dialogBuilder = null;
+        	dialogBuilderError = null;
         	arrayAdapter = null;
         	return;
         }
+        supported = true;
         
-        // Check if Bluetooth is enabled on the device.
+        // Initialise final variables.
+        arrayAdapter = new ArrayAdapter<String>(a, android.R.layout.select_dialog_singlechoice);
+        dialogBuilder = new AlertDialog.Builder(a);
+        
+        // No-device dialog can be initialised here since it is basically static.
+        dialogBuilderError = new AlertDialog.Builder(a);
+        dialogBuilderError.setTitle("BlueTooth query");
+ 		TextView textView = new TextView(a);
+ 		textView.setText("\nNo devices discovered.\nPlease externally pair this device from "
+ 				+ "Settings to the Arduino's BlueTooth module.\n\n");
+ 		textView.setGravity(Gravity.CENTER_HORIZONTAL);
+ 		dialogBuilderError
+ 			.setView(textView)
+ 			.setCancelable(false)
+     		.setPositiveButton("O.K, I will do that sir", null);
+ 		dialogBuilderError.create();
+        
+        tryFindDevice();
+    }
+    
+    public void tryFindDevice() {
+    	if (!checkSupported()) { return; }
+    	
+    	// Check if Bluetooth is enabled on the device.
         if (!btAdapter.isEnabled()) {
         	// This intent kindly promopts user to enable BlueTooth on their potato.
         	Intent btEnableRequest = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -64,51 +94,56 @@ public class BlueToothHandler implements IToastable {
         	log("BlueTooth: O.K");
         }
         
-        arrayAdapter = new ArrayAdapter<String>(a, android.R.layout.select_dialog_singlechoice);
-        
         // Query the pre-discovered/bonded devices
+        arrayAdapter.clear();
         Set<BluetoothDevice> devicesPaired = btAdapter.getBondedDevices();
     	for (BluetoothDevice d : devicesPaired) {
     		arrayAdapter.add(String.format("%s\n%s", d.getName(), d.getAddress()));
     	}
     	
     	// Set up builder
-    	dialogBuilder = new AlertDialog.Builder(a)
-    		.setTitle("BlueTooth query");
+        dialogBuilder.setTitle("BlueTooth query");
     	int checkedItem = 0;
     	// Initialise radio-button list	
-    	// Only show devices if they actually exist
-    	if (devicesPaired.size() > 0) {
-    		dialogBuilder.setSingleChoiceItems(arrayAdapter, checkedItem,
-	    		new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						log("Item was checked: @ " + which);
-					}
-				})
-	    		// Show positive button
-	    		.setPositiveButton("O.K", new DialogInterface.OnClickListener() {
-		    		@Override
-		    		public void onClick (DialogInterface dialog, int which) {
-		    			getDevice(which);
-		    			connectDevice();
-		    		}
-		    	})
-	    		// and negative
-		    	.setNegativeButton("Cancel", null);
-    	}
-    	else {
-    		TextView textView = new TextView(a);
-    		textView.setText("\nNo devices discovered.\nPlease externally pair this device from "
-    				+ "Settings to the Arduino's BlueTooth module.\n\n");
-    		textView.setGravity(Gravity.CENTER_HORIZONTAL);
-    		dialogBuilder
-    			.setView(textView)
-	    		.setPositiveButton("O.K, I will do that sir", null);
-    	}
-    	dialogBuilder.create().show();
+    	// Successful dialog.
+		dialogBuilder.setSingleChoiceItems(arrayAdapter, checkedItem,
+    		new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					log("Item was checked: @ " + which);
+				}
+			})
+    		// Show positive button
+    		.setPositiveButton("O.K", new DialogInterface.OnClickListener() {
+	    		@Override
+	    		public void onClick (DialogInterface dialog, int which) {
+	    			getDevice(which);
+	    			connectDevice();
+	    		}
+	    	})
+    		// and negative
+    		.setCancelable(true)
+	    	.setNegativeButton("Cancel", null);
+		
+		dialogBuilder.create();
+		
+		if (devicesPaired.size() > 0) {
+			dialogBuilder.show();
+		}
+		else {
+			dialogBuilderError.show();
+		}
     }
     
+    // Initiates an insulting toast if not supported.
+    private boolean checkSupported() {
+    	if (!supported) {
+    		log("BlueTooth functionality is not supported on this old potato. Please consider closing this now-useless application, "
+    				+ "and buying a new mobile-device.");
+    		return false;
+    	}
+    	return true;
+    }
     
     // TODO: SHOW HOW MANY BYTES, OR MB, OR KiB are in packet
     private void getDevice(int idx) {
@@ -161,12 +196,39 @@ public class BlueToothHandler implements IToastable {
     	onDeviceConnect();
     }
     
+    public void sendPacket (byte[] buffer) {
+    	// Insult user again if they somehow try send a packet
+    	if (!checkSupported()) {
+    		return;
+    	}
+    	if (!connected) {
+    		System.err.println("Attemped to write whilst being disconnected.");
+    		log ("Cannot write buffer to null device. Connect to BlueTooth device.");
+    		return;
+    	}
+    	if (oStream == null) {
+    		System.err.println("Attemped to write to null oStream.");
+    		log ("Attemped to write to null oStream.");
+    		return;
+    	}
+    	
+    	// Try actually send the packet
+    	try {
+			oStream.write(buffer);
+		} catch (IOException e) {
+			handleException(e, "Error writing to oStream...");
+			return;
+		}
+    }
+    
     private void onDeviceConnect() {
+    	connected = true;
     	System.out.println("onDeviceConnect()");
     	((MainActivity)a).setBtStatusDisplay(true);
     }
     
     private void onDeviceDisconnect () {
+    	connected = false;
     	System.out.println("onDeviceDisconnect()");
     	((MainActivity)a).setBtStatusDisplay(false);
     }
@@ -206,7 +268,7 @@ public class BlueToothHandler implements IToastable {
 	    	// Unknown
 	    	default: {
 	    		log("An unexpected error occurred while attempting to enable Bluetooth.");
-	    	}
+	    	} break;
     	}
     }
     

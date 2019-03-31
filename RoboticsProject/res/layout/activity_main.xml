@@ -81,12 +81,17 @@
 				android:textAllCaps="false" android:textStyle="bold"
 				android:typeface="monospace" />
 
-			<Button android:id="@+id/btn_upload"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content" android:fontFamily="monospace"
-				android:onClick="btn_upload" android:text="@string/btn_upload"
-				android:textAllCaps="false" android:textStyle="bold"
-				android:typeface="monospace" />
+			<Button
+			    android:id="@+id/btn_upload"
+			    android:layout_width="wrap_content"
+			    android:layout_height="wrap_content"
+			    android:fontFamily="monospace"
+			    android:onClick="btn_upload"
+			    android:text="@string/btn_upload"
+			    android:textAllCaps="false"
+			    android:textStyle="bold"
+			    android:typeface="monospace" />
+
 		</TableRow>
 	</TableLayout>
 

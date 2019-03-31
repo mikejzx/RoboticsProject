@@ -68,25 +68,29 @@ public class MainActivity extends Activity implements IToastable {
         btnAttach.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				log("Not yet implemented...");
+				bt.tryFindDevice();
 			}
         });
     }
 
     public void btn_upload(View view) {
-        // TODO: implement bluetooth functions...
         byte[] buffer = serialiseNodeData();
         String dataString = getSerialisedDataHexString(buffer);
-        //bt.writeData(buffer);
+        bt.sendPacket(buffer);
         System.out.println("Sent packet to bluetooth device containing: \n" + dataString);
     }
     
     public void setBtStatusDisplay(boolean active) {
+    	// Change bluetooth status string.
     	String szLabel = active 
     			? getString(R.string.lab_attach_status_true) 
     			: getString(R.string.lab_attach_status_false);
     	TextView label = (TextView)findViewById(R.id.lab_btstatus);
     	label.setText(szLabel);
+    	
+    	// Enable/disable upload button.
+    	Button btn = (Button)findViewById(R.id.btn_upload);
+    	btn.setEnabled(active);
     }
     
     @Override
@@ -135,7 +139,7 @@ public class MainActivity extends Activity implements IToastable {
         byte[] serialisedData = new byte[packetSize];
         
         // First byte in packet represents the number of nodes. 
-        // Second represents scale.
+        // Second represents scale in (undetermined unit [TODO]).
         // (8-bit int is fine because node count is clamped from 0 to 100)
         serialisedData[0] = (byte)nodeCount;
         serialisedData[1] = NodeView.nodeScale;
@@ -179,7 +183,7 @@ public class MainActivity extends Activity implements IToastable {
     }
     
     public void btn_ins(View view) {
-        // Clamp at 100 nodes
+        // Clamp at 100 nodes for stability's sake, (overall, 255 can be fit in the packet.)
         if (nodes.size() > 99) { return; }
 
         Vector2 posA = nodes.get(selectedNodeIndex).position;
