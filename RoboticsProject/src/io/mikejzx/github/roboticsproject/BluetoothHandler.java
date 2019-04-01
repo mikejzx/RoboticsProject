@@ -2,6 +2,8 @@ package io.mikejzx.github.roboticsproject;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -25,6 +27,8 @@ import android.widget.Toast;
 public class BlueToothHandler implements IToastable {
 
 	public boolean secureSocket = false;
+	
+	private Thread connectionThread;
 	
 	private BluetoothDevice btDevice;
 	private BluetoothSocket btSocket;
@@ -166,50 +170,58 @@ public class BlueToothHandler implements IToastable {
     		return;
     	}
     	
-    	String szMode = secureSocket ? " (Secure mode)" : " (Insecure mode)";
-    	try {
-    		// The actual module is Bluetooth 4.0 but i decided to include both just  in case
-    		if (secureSocket) {
-    			// Secure connections are supported on Bluetooth 2.1 and above.
-        		btSocket = btDevice.createRfcommSocketToServiceRecord(BT_GUID);
-    		}
-    		else {
-    			// Insecure socket for bluetooth modules below version 2.1.
-        		btSocket = btDevice.createInsecureRfcommSocketToServiceRecord(BT_GUID);
-    		}
-    		
-    	} catch (Exception e) {
-    		String i = "";
-    		if (secureSocket) {
-    			i = " Please try running in Insecure mode.";
-    		}
-    		handleException(e, "Error creating Bluetooth socket." + i);
-    		onDeviceDisconnect();
-    		return;
-    	}
-    	log("Socket successfully created." + szMode);
-    	
-    	// Try initiate outgoing connection request.
-    	try {
-    		btSocket.connect();
-    	} catch (Exception e) {
-    		handleException(e, "Error initiating outgoing connection request.");
-    		onDeviceDisconnect();
-    		return;
-    	}
-    	log("Successfully connected." + szMode);
-    	
-    	// Retrieve I/O streams
-    	try {
-    		oStream = btSocket.getOutputStream();
-    	}
-    	catch (Exception e) {
-    		handleException(e, "Error fetching I/O streams.");
-    		onDeviceDisconnect();
-    		return;
-    	}
-    	log ("I/O streams successfully fetched. Data transmission is now enabled.");
-    	onDeviceConnect();
+    	// Prevent blocking the main thread
+    	Runnable runnable = new Runnable() {
+    		@Override
+			public void run() {
+		    	String szMode = secureSocket ? " (Secure mode)" : " (Insecure mode)";
+		    	try {
+		    		// The actual module is Bluetooth 4.0 but i decided to include both just  in case
+		    		if (secureSocket) {
+		    			// Secure connections are supported on Bluetooth 2.1 and above.
+		        		btSocket = btDevice.createRfcommSocketToServiceRecord(BT_GUID);
+		    		}
+		    		else {
+		    			// Insecure socket for bluetooth modules below version 2.1.
+		        		btSocket = btDevice.createInsecureRfcommSocketToServiceRecord(BT_GUID);
+		    		}
+		    		
+		    	} catch (Exception e) {
+		    		String i = "";
+		    		if (secureSocket) {
+		    			i = " Please try running in Insecure mode.";
+		    		}
+		    		handleExceptionThreaded(e, "Error creating Bluetooth socket." + i);
+		    		setConnectionThreaded(false);
+		    		return;
+		    	}
+		    	logThreaded("Socket successfully created through seperate thread ." + szMode);
+		    	
+		    	// Try initiate outgoing connection request.
+		    	try {
+		    		btSocket.connect();
+		    	} catch (Exception e) {
+		    		handleExceptionThreaded(e, "Error initiating outgoing connection request.");
+		    		setConnectionThreaded(false);
+		    		return;
+		    	}
+		    	logThreaded("Successfully connected." + szMode);
+		    	
+		    	// Retrieve I/O streams
+		    	try {
+		    		oStream = btSocket.getOutputStream();
+		    	}
+		    	catch (Exception e) {
+		    		handleExceptionThreaded(e, "Error fetching I/O streams.");
+		    		setConnectionThreaded(false);
+		    		return;
+		    	}
+		    	logThreaded ("I/O streams successfully fetched. Data transmission is now enabled.");
+		    	setConnectionThreaded(true);
+			}
+    	};
+    	connectionThread = new Thread(runnable);
+    	connectionThread.start();
     }
     
     public void sendPacket (byte[] buffer) {
@@ -260,6 +272,11 @@ public class BlueToothHandler implements IToastable {
 		} catch (IOException e) {
 			handleException(e, "Error freeing btSocket resources.");
 		}
+    	
+    	if (connectionThread.isAlive()) {
+    		try { connectionThread.join(); } 
+    		catch (InterruptedException e) { e.printStackTrace(); }
+    	}
     }
     
     private void handleException (Exception e, String s) {
@@ -293,5 +310,39 @@ public class BlueToothHandler implements IToastable {
     @Override
     public void log(String txt) {
     	Toast.makeText(a.getApplicationContext(), txt, Toast.LENGTH_LONG).show();
+    }
+    
+    // To be called from alternativ threads.
+    public void logThreaded (final String txt) {
+    	a.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				log(txt);
+			}
+    	});
+    }
+    
+    private void handleExceptionThreaded (final Exception e, final String s) {
+    	a.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				e.printStackTrace();
+				log(s + ", \n [Verbose:]" + e.getMessage());
+			}
+    	});
+    }
+    
+    private void setConnectionThreaded(final boolean b) {
+    	a.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				if (b) {
+					onDeviceConnect();
+				}
+				else {
+					onDeviceDisconnect();
+				}
+			}
+    	});
     }
 }
