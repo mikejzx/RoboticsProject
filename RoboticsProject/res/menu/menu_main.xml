@@ -13,5 +13,11 @@
         android:title="@string/action_debuginfo"
         android:showAsAction="ifRoom"
         />
+    
+    <item 
+        android:id="@+id/action_securemode"
+        android:title="@string/action_securemode_false"
+        android:showAsAction="ifRoom"
+        />
 
 </menu>

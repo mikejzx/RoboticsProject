@@ -24,6 +24,8 @@ import android.widget.Toast;
 
 public class BlueToothHandler implements IToastable {
 
+	public boolean secureSocket = false;
+	
 	private BluetoothDevice btDevice;
 	private BluetoothSocket btSocket;
 	private OutputStream oStream;
@@ -163,14 +165,29 @@ public class BlueToothHandler implements IToastable {
     		onDeviceDisconnect();
     		return;
     	}
+    	
+    	String szMode = secureSocket ? " (Secure mode)" : " (Insecure mode)";
     	try {
-    		// Insecure since the bluetooth module is below version 2.1.
-    		btSocket = btDevice.createInsecureRfcommSocketToServiceRecord(BT_GUID);
+    		// The actual module is Bluetooth 4.0 but i decided to include both just  in case
+    		if (secureSocket) {
+    			// Secure connections are supported on Bluetooth 2.1 and above.
+        		btSocket = btDevice.createRfcommSocketToServiceRecord(BT_GUID);
+    		}
+    		else {
+    			// Insecure socket for bluetooth modules below version 2.1.
+        		btSocket = btDevice.createInsecureRfcommSocketToServiceRecord(BT_GUID);
+    		}
+    		
     	} catch (Exception e) {
-    		handleException(e, "Error creating Bluetooth socket.");
+    		String i = "";
+    		if (secureSocket) {
+    			i = " Please try running in Insecure mode.";
+    		}
+    		handleException(e, "Error creating Bluetooth socket." + i);
     		onDeviceDisconnect();
     		return;
     	}
+    	log("Socket successfully created." + szMode);
     	
     	// Try initiate outgoing connection request.
     	try {
@@ -180,7 +197,7 @@ public class BlueToothHandler implements IToastable {
     		onDeviceDisconnect();
     		return;
     	}
-    	log("Successfully connected.");
+    	log("Successfully connected." + szMode);
     	
     	// Retrieve I/O streams
     	try {
@@ -215,9 +232,10 @@ public class BlueToothHandler implements IToastable {
     	try {
 			oStream.write(buffer);
 		} catch (IOException e) {
-			handleException(e, "Error writing to oStream...");
+			handleException(e, "ERROR writing to oStream...");
 			return;
 		}
+    	log("Successfully wrote to oStream....");
     }
     
     private void onDeviceConnect() {

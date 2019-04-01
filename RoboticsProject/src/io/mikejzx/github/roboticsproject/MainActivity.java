@@ -38,6 +38,8 @@ public class MainActivity extends Activity implements IToastable {
     private static AlertDialog dialogAlert;
     private static Builder dialogBuilder;
 
+    private static Menu menuMain;
+    
     // Called on application load
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,6 +95,19 @@ public class MainActivity extends Activity implements IToastable {
     	btn.setEnabled(active);
     }
     
+    public void setBtSecureMode(boolean active) {
+    	bt.secureSocket = active;
+    	
+    	if (menuMain == null) { return; }
+    	
+    	// Change security status label.
+    	String szLabel = active
+    			? getString(R.string.action_securemode_true)
+    			: getString(R.string.action_securemode_false);
+    	menuMain.findItem(R.id.action_securemode).setTitle(szLabel);
+    	System.out.println("- Set bluetooth security menu title");
+    }
+    
     @Override
     protected void onDestroy() {
     	bt.dispose();
@@ -112,9 +127,13 @@ public class MainActivity extends Activity implements IToastable {
 	    		System.out.println("Menu clicked");
 	    		StringBuilder byteCount = new StringBuilder(); // StringBuilder will be passed 'by reference'
 	    		String hexData = serialiseNodeDataString(byteCount);
-	    		dialogBuilder.setMessage("Serialised hex data for signed 16-bit vectors: \n" + byteCount + "\n\n" +  hexData);
+	    		dialogBuilder.setMessage("Serialised hex data for signed 32-bit vectors (" + byteCount + ")\n\n" +  hexData);
 	    		dialogAlert = dialogBuilder.create();
 	            dialogAlert.show();
+	    	} return true;
+	    	
+	    	case (R.id.action_securemode): {
+	    		setBtSecureMode(bt.secureSocket ^ true);
 	    	} return true;
     	
     		default: {
@@ -127,6 +146,7 @@ public class MainActivity extends Activity implements IToastable {
     public boolean onCreateOptionsMenu (Menu menu) {
     	MenuInflater inflator =  getMenuInflater();
     	inflator.inflate(R.menu.menu_main, menu);
+    	menuMain = menu;
 		return true;
     }
     
@@ -166,7 +186,7 @@ public class MainActivity extends Activity implements IToastable {
         int countBytes = serialisedData.length;
         float countKibibytes = Math.round(countBytes / 1024.0f * 100.0f) / 100.0f;
         String szCountKibibytes = String.format(java.util.Locale.UK, "%.2f", countKibibytes);
-        byteCount.append(String.format("%d bytes (~%s KiB)", countBytes, szCountKibibytes));
+        byteCount.append(String.format("%d bytes, ~%s KiB", countBytes, szCountKibibytes));
         return getSerialisedDataHexString(serialisedData);
     }
     
