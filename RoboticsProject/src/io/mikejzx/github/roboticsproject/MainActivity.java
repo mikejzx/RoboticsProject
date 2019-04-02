@@ -210,6 +210,8 @@ public class MainActivity extends Activity implements IToastable {
         Vector2 posA = nodes.get(selectedNodeIndex).position;
         Vector2 posB;
         int nodeCount = nodes.size();
+        
+        System.out.println("sel: " + selectedNodeIndex + " count:" + nodeCount);
         if (selectedNodeIndex < nodeCount - 1 && selectedNodeIndex > 0) {
             // Average between selected and next
             posB = nodes.get(selectedNodeIndex + 1).position;

@@ -179,7 +179,7 @@ public class NodeView extends View {
 
         instance.invalidate();
     }
-
+    
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         final Vector2 touchPos = new Vector2((short)event.getX(), (short)event.getY());
@@ -190,20 +190,25 @@ public class NodeView extends View {
             case (MotionEvent.ACTION_DOWN): {
                 // Touch down checks for a nearby node and selects it.
             	// (ARRAYLIST *MUST* BE INSTANTIATED SO THE ORIGINAL REF DOESNT GET SORTED.)
-                List<Node> nodes = new ArrayList<Node>(MainActivity.nodes);
+                List<ICompareCached<Integer>> nodes = new ArrayList<ICompareCached<Integer>>();
+                for (int i = 0; i < MainActivity.nodes.size(); i++) {
+                	nodes.add(new NodeIndexed(MainActivity.nodes.get(i), i));
+                }
                 // Sort by distance, so shortest distance node is selected first.
                 // Instead of iterating through the node list (was old method...)
-                Collections.sort(nodes, new Comparator<Node>() {
+                Collections.sort(nodes, new Comparator<ICompareCached<Integer>>() {
 					@Override
-					public int compare(Node lhs, Node rhs) {
-						lhs.setComparer(lhs.position.distance(touchPos));
-						rhs.setComparer(rhs.position.distance(touchPos));
-						return lhs.getComparer().compareTo(rhs.getComparer());
+					public int compare(ICompareCached<Integer> lhs, ICompareCached<Integer> rhs) {
+						Node lhsNode = ((NodeIndexed)lhs).node;
+						Node rhsNode = ((NodeIndexed)rhs).node;
+						lhsNode.setComparer(lhsNode.position.distance(touchPos));
+						rhsNode.setComparer(rhsNode.position.distance(touchPos));
+						return lhsNode.getComparer().compareTo(rhsNode.getComparer());
 					}
                 });
-                Node n = nodes.get(0);
-                if (n.getComparer() < touchDistanceThreshold) {
-                    setSelectedNode(n, 0);
+                NodeIndexed n = (NodeIndexed)nodes.get(0);
+                if (n.node.getComparer() < touchDistanceThreshold) {
+                    setSelectedNode(n.node, n.getComparer());
                 }
             } break;
 
@@ -235,7 +240,7 @@ public class NodeView extends View {
                 }
             }, 500);
         }
-
+        
         return true;
         //return super.onTouchEvent(event);
     }
