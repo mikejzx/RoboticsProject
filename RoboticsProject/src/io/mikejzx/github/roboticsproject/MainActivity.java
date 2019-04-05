@@ -23,7 +23,7 @@ public class MainActivity extends Activity implements IToastable {
     /*
         Developed by Michael
         mikejzx03@gmail.com
-        mikejzx.github.io
+        https://mikejzx.github.io/
 
             15.03.2019
         - For school robotics project. -
