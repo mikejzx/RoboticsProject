@@ -1,0 +1,6 @@
+{
+    "programmer": "AVRISP mkII",
+    "board": "arduino:avr:uno",
+    "sketch": "arduino-cat-mainsrc.ino",
+    "port": "/dev/ttyUSB0"
+}
