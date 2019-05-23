@@ -17,6 +17,7 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 public class MainActivity extends Activity implements IToastable {
 
@@ -37,6 +38,8 @@ public class MainActivity extends Activity implements IToastable {
     
     private static AlertDialog dialogAlert;
     private static Builder dialogBuilder;
+    
+    private static boolean enableFollow = false;
 
     private static Menu menuMain;
     
@@ -72,6 +75,17 @@ public class MainActivity extends Activity implements IToastable {
 			public void onClick(View v) {
 				bt.tryFindDevice();
 			}
+        });
+        
+        ToggleButton togOnoff = (ToggleButton)findViewById(R.id.tog_onoff);
+        togOnoff.setOnClickListener(new OnClickListener() {
+        	@Override
+        	public void onClick(View v) {
+        		if (!enableFollow) {
+        			// Try tell the arduino to start
+        			enableFollow = bt.try
+        		}
+        	}
         });
     }
 

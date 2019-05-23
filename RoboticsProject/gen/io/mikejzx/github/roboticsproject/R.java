@@ -29,8 +29,8 @@ public final class R {
         public static final int ic_launcher=0x7f020000;
     }
     public static final class id {
-        public static final int action_debuginfo=0x7f09000a;
-        public static final int action_securemode=0x7f09000b;
+        public static final int action_debuginfo=0x7f09000b;
+        public static final int action_securemode=0x7f09000c;
         public static final int btn_add=0x7f090007;
         public static final int btn_attach=0x7f090009;
         public static final int btn_rm=0x7f090006;
@@ -40,6 +40,7 @@ public final class R {
         public static final int linearLayout2=0x7f090001;
         public static final int tableLayout1=0x7f090004;
         public static final int tableRow1=0x7f090005;
+        public static final int tog_onoff=0x7f09000a;
         public static final int view_nodes=0x7f090002;
     }
     public static final class layout {
@@ -62,6 +63,7 @@ public final class R {
         public static final int btn_upload=0x7f06000a;
         public static final int lab_attach_status_false=0x7f060006;
         public static final int lab_attach_status_true=0x7f060007;
+        public static final int toggle_onoff=0x7f06000b;
     }
     public static final class style {
         /** 

@@ -15,5 +15,6 @@
 	<string name="btn_insert">Insert</string>
 	<string name="btn_remove">Remove</string>
 	<string name="btn_upload">Upload path</string>
+	<string name="toggle_onoff"></string>
     
 </resources>

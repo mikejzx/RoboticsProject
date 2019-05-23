@@ -103,4 +103,13 @@
 	    android:layout_alignEnd="@+id/tableLayout1"
 	    android:text="@string/btn_attach" />
 
+	<ToggleButton
+	    android:id="@+id/tog_onoff"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_alignBaseline="@+id/btn_attach"
+	    android:layout_alignBottom="@+id/btn_attach"
+	    android:layout_toLeftOf="@+id/btn_attach"
+	    android:text="@string/toggle_onoff" />
+
 </RelativeLayout>
