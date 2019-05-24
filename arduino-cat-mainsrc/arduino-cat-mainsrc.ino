@@ -69,12 +69,15 @@ void setup () {
     Serial.println("Debug I/O stream working");
     
     // Initialise Bluetooth serial I/O stream
+    btSerial.begin(115200);
+    btSerial.print("AT+BAUD=4\r\n"); // Change BAUD to 9600
+    btSerial.print("U,9600,N\r\n");
+    delay(100);
     btSerial.begin(9600);
-    // Try change BlueTooth display-identifier to ms_ard
-    // (May need manual null-terminator?)
-    btSerial.print("AT+NAMEms_ard");
-    btSerial.print("AT+PSWD=9876"); // Set passphrase for incoming connections
-    btSerial.print("AT+ROLE=0"); // Give Arduino slave role
+    // Try change BlueTooth display-identifier to mike_ard
+    btSerial.print("AT+NAMEmike_ino\r\n");
+    btSerial.print("AT+PIN=987654\r\n"); // Set passphrase for incoming connections
+    //btSerial.print("AT+ROLE=0\r\n"); // Give Arduino slave role
    
     // Set motor pin modes
     pinMode(PORT_MOTOR_LCTRL1, OUTPUT);
@@ -143,12 +146,11 @@ void loop() {
 
 void testBluetooth () {
     if (Serial.available()) {
-        Serial.println("Bluetooth serial data AVAILABLE");
-        // For now just print to the debug monitor.
-        Serial.printf("%X ", btSerial.read());
+        btSerial.print((char)Serial.read());
     }
-    else {
-        Serial.println("No serial data...");
+  
+    if (btSerial.available()) {
+        Serial.println("read: " + btSerial.read());
     }
 }
 
