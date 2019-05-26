@@ -2,6 +2,7 @@ package io.mikejzx.github.roboticsproject;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.util.Set;
 import java.util.UUID;
 
@@ -41,7 +42,9 @@ public class BlueToothHandler implements IToastable {
 	
 	// Global identifier for the application's bluetooth service.
 	// TODO: MAKE SURE THE ARDUINO USES THE SAME GUID OR IT MAY NOT CONNECT.
-	private static final UUID BT_GUID = UUID.fromString("34286088-10f5-45bd-98c8-31bd8d6c7351");
+	private static final UUID BT_GUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+		// "Well known" UUID^^^
+		//UUID.fromString("34286088-10f5-45bd-98c8-31bd8d6c7351");
 	
 	private final AlertDialog.Builder dialogBuilder;
 	private final AlertDialog.Builder dialogBuilderError;
@@ -160,6 +163,57 @@ public class BlueToothHandler implements IToastable {
     	btDevice = btAdapter.getRemoteDevice(mac);
     }
     
+    private boolean sockcreate_standard () {
+    	try {
+			// The actual module is Bluetooth 4.0 but i decided to include both just  in case
+			if (secureSocket) {
+				// Secure connections are supported on Bluetooth 2.1 and above.
+	    		btSocket = btDevice.createRfcommSocketToServiceRecord(BT_GUID);
+			}
+			else {
+				// Insecure socket for bluetooth modules below version 2.1.
+	    		btSocket = btDevice.createInsecureRfcommSocketToServiceRecord(BT_GUID);
+			}
+    	} catch (Exception e) {
+    		String i = "";
+    		if (secureSocket) {
+    			i = " Please try running in Insecure mode.";
+    		}
+    		handleExceptionThreaded(e, "Error creating Bluetooth socket." + i);
+    		return false;
+		}
+    	return true;
+    }
+    
+    private boolean sockcreate_dodgy () {
+    	try {
+	    	// To try fix the 'out going connection request' issue, we can
+			// try use the hidden createRfcommSocket method.
+			Method method;
+			Class<?>[] paramTypes = new Class[] { Integer.TYPE };
+			
+			// The actual module is Bluetooth 4.0 but i decided to include both just  in case
+			if (secureSocket) {
+				// Retrieve the hidden symbol from BluetoothDevice
+				method = btDevice.getClass().getMethod("createRfcommSocket", paramTypes);
+			}
+			else {
+				// Insecure socket for bluetooth modules below version 2.1.
+				method = btDevice.getClass().getMethod("createInsecureRfcommSocket", paramTypes);
+			}
+			Object[] params = new Object[] { Integer.valueOf(1) };
+			btSocket = (BluetoothSocket)method.invoke(btDevice, params);
+		} catch (Exception e) {
+    		String i = "";
+    		if (secureSocket) {
+    			i = " Please try running in Insecure mode.";
+    		}
+    		handleExceptionThreaded(e, "Error creating Bluetooth socket." + i);
+    		return false;
+		}
+    	return true;
+    }
+    
     // Initiate connection
     private void connectDevice () {
     	if (btDevice == null) {
@@ -173,35 +227,47 @@ public class BlueToothHandler implements IToastable {
     		@Override
 			public void run() {
 		    	String szMode = secureSocket ? " (Secure mode)" : " (Insecure mode)";
-		    	try {
-		    		// The actual module is Bluetooth 4.0 but i decided to include both just  in case
-		    		if (secureSocket) {
-		    			// Secure connections are supported on Bluetooth 2.1 and above.
-		        		btSocket = btDevice.createRfcommSocketToServiceRecord(BT_GUID);
+		    	if (sockcreate_standard()) {
+		    		logThreaded("Socket successfully created through seperate thread ." + szMode);
+		    	} else {
+		    		if (sockcreate_dodgy()) {
+		    			logThreaded("Standard socket failed, fallback socket created SUCCESS.");
 		    		}
 		    		else {
-		    			// Insecure socket for bluetooth modules below version 2.1.
-		        		btSocket = btDevice.createInsecureRfcommSocketToServiceRecord(BT_GUID);
+		    			logThreaded("Standard & Fallback socket failed to create.");
+		    			setConnectionThreaded(false);
+			    		return;
 		    		}
-		    		
-		    	} catch (Exception e) {
-		    		String i = "";
-		    		if (secureSocket) {
-		    			i = " Please try running in Insecure mode.";
-		    		}
-		    		handleExceptionThreaded(e, "Error creating Bluetooth socket." + i);
-		    		setConnectionThreaded(false);
-		    		return;
 		    	}
-		    	logThreaded("Socket successfully created through seperate thread ." + szMode);
 		    	
 		    	// Try initiate outgoing connection request.
 		    	try {
+		    		try { btAdapter.cancelDiscovery(); } 
+		    		catch (Exception e) { handleExceptionThreaded(e, "Error cancelling discovery mode."); }
 		    		btSocket.connect();
 		    	} catch (Exception e) {
-		    		handleExceptionThreaded(e, "Error initiating outgoing connection request.");
-		    		setConnectionThreaded(false);
-		    		return;
+		    		handleExceptionThreaded(e, "Error initiating outgoing connection request. Attempting fallback....");
+		    		
+		    		// Try create fallback socket and connect to that.
+		    		if (sockcreate_dodgy()) {
+		    			logThreaded("Fallback socket created successfully.");
+		    			
+		    			// Try connect
+		    			try {
+		    				try { btAdapter.cancelDiscovery(); } 
+				    		catch (Exception e1) { handleExceptionThreaded(e1, "Error cancelling discovery mode."); }
+				    		btSocket.connect();
+		    			} catch (Exception e2) {
+		    				handleExceptionThreaded(e2, "Error initiating outgoing connection request with fallback. Aborting...");
+			    			setConnectionThreaded(false);
+				    		return;
+		    			}
+		    		}
+		    		else {
+		    			logThreaded("Fallback socket failed to create.");
+		    			setConnectionThreaded(false);
+			    		return;
+		    		}
 		    	}
 		    	logThreaded("Successfully connected." + szMode);
 		    	
@@ -307,7 +373,7 @@ public class BlueToothHandler implements IToastable {
     // Wrapper for Toast.makeText(). Really keeps shit alot shorter.
     @Override
     public void log(String txt) {
-    	Toast.makeText(a.getApplicationContext(), txt, Toast.LENGTH_LONG).show();
+    	Toast.makeText(a.getApplicationContext(), txt, Toast.LENGTH_SHORT).show();
     }
     
     // To be called from alternativ threads.

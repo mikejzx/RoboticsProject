@@ -77,6 +77,7 @@ public class MainActivity extends Activity implements IToastable {
 			}
         });
         
+        /*
         ToggleButton togOnoff = (ToggleButton)findViewById(R.id.tog_onoff);
         togOnoff.setOnClickListener(new OnClickListener() {
         	@Override
@@ -86,7 +87,7 @@ public class MainActivity extends Activity implements IToastable {
         			enableFollow = bt.try
         		}
         	}
-        });
+        });*/
     }
 
     public void btn_upload(View view) {
