@@ -47,14 +47,15 @@ struct Vector2 {
 };
 
 // Basic variables
-uint8_t speedL = 0x3A;
-uint8_t speedR = 0x3A;
+uint8_t speedL = 0x2A;
+uint8_t speedR = 0x2A;
 uint8_t totalPower = 0xFF;
 float steerAmount = 0.0f; // Steering amount from -1.0f to 1.0f
 
 // Line-following vars
 Vector2 currentPos = { 0, 0 };
 Vector2* nodes;
+bool hasTrack = false;
 
 // Miscellanious variables
 uint8_t timer = 0x00;
@@ -86,15 +87,28 @@ void setup () {
     pinMode(PORT_MOTOR_RCTRL2, OUTPUT);
     pinMode(PORT_MOTOR_SPEEDL, OUTPUT);
     pinMode(PORT_MOTOR_SPEEDR, OUTPUT);
-}
 
-// Called repetitively
-void loop() {
+    hasTrack = true;
+    testMotors();
+
     // Little timer that delays the motors running upon start.
     // Could probably be written a bit better...
     while (timer < 0xFF) {
         timer += 0x01; 
         delay(10);
+    }
+
+    hasTrack = false;
+    stopMotors();
+}
+
+// Called repetitively
+void loop() {
+    if (hasTrack) {
+        testMotors();
+    }
+    else {
+        stopMotors();
     }
 
     testBluetooth();
@@ -166,11 +180,16 @@ void testMotors() {
     */
     
     // Set left motor forward
-    digitalWrite(PORT_MOTOR_LCTRL1, LOW);
-    digitalWrite(PORT_MOTOR_LCTRL2, HIGH);
+    digitalWrite(PORT_MOTOR_LCTRL1, HIGH);
+    digitalWrite(PORT_MOTOR_LCTRL2, LOW);
     // Set right motor forward
-    digitalWrite(PORT_MOTOR_RCTRL1, HIGH);
-    digitalWrite(PORT_MOTOR_RCTRL2, LOW);
+    digitalWrite(PORT_MOTOR_RCTRL1, LOW);
+    digitalWrite(PORT_MOTOR_RCTRL2, HIGH);
+}
+
+void stopMotors () {
+    analogWrite(PORT_MOTOR_SPEEDL, 0x00);
+    analogWrite(PORT_MOTOR_SPEEDR, 0x00);
 }
 
 void calcMotorPower () {
