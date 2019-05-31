@@ -27,11 +27,11 @@ const int PORT_RGB_R = 3,
 const int PORT_US_PING = 12,
     PORT_US_ECHO = 13;
 
-const float MOTOR_BIAS = 0.16; // Use if motors are dodgey.
+const float MOTOR_BIAS = 0.0; //0.16; // Use if motors are dodgey.
 
 // Basic speeds
-int speed_max = 0x20;
-int speed_turn = 0x15;
+int speed_max = 250;
+int speed_turn = 250;
 
 // For RGB
 int led_max = 63;
@@ -66,7 +66,8 @@ void setup() {
 // Called constantly
 void loop() {
     if (stopped) { 
-        motors_rot();
+        //motors_rot();
+        set_motors(0, 0);
     }
     else {
         motors_straight();
@@ -84,7 +85,7 @@ void motors_straight () {
     int speedR = speed_max * percentR;
 
     // Send the speeds to the motors
-    set_motors(speedL, speedR);
+    set_motors(250, 250);
 }
 
 // Rotate right
@@ -108,7 +109,7 @@ void set_motors (int speedL, int speedR) {
 
 void rgb_leds () {
     // Continuously fade up
-    if (led_bright < led_max * 4) {
+    if (led_bright < led_max * 128) {
         led_bright += 1;  
     }
     else {
@@ -118,9 +119,9 @@ void rgb_leds () {
     
     // Set colours, red and blue is set based on whether an obstacle is visible or not.
     int red = stopped ? 50 : 0;
-    int blu = stopped ? 0 : (led_bright / 4);
+    int blu = stopped ? 0 : (led_bright / 128);
     analogWrite(PORT_RGB_R, red);
-    analogWrite(PORT_RGB_G, led_bright / 4);
+    analogWrite(PORT_RGB_G, led_bright / 128);
     analogWrite(PORT_RGB_B, blu);
 }
 
@@ -135,10 +136,7 @@ void ultrasonic () {
 
     // Call the non-blocking pulseIn method.
     // the 'stopped' variable is now set in there.
-    pulse_nonblock(PORT_US_ECHO, HIGH);
-
-    // For observational purposes.
-    delay(500);
+    pulse_nonblock(PORT_US_ECHO);
 }
 
 // Send the ping out from ultrasonic sensor
@@ -206,7 +204,7 @@ uint64_t pulse_nonblock (int pin) {
         us_pinging = false;
 
         // Ping received, read it
-        ultrasonic_readecho(dur);
+        ultrasonic_readecho(pulse_delta);
     }
 
     return pulse_delta;
