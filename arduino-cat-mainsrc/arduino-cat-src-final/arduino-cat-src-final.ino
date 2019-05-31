@@ -173,8 +173,6 @@ void ultrasonic_readecho (uint64_t dur) {
     when the change is detected.
     Mostly based off this:
     https://arduino.stackexchange.com/questions/28816/how-can-i-replace-pulsein-with-interrupts
-    
-    NOTE: LOWs & HIGHs MAY NEED TO BE SWITCHED!
 */
 uint64_t pulse_nonblock (int pin) {
     static uint64_t rising_time;
